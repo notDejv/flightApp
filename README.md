@@ -1,3 +1,2 @@
 # flightApp
 
-Personal iOS project.
