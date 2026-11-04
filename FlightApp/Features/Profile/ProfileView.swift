@@ -11,10 +11,12 @@ struct ProfileView: View {
             List {
                 if let user = session.user {
                     Section { userHeader(user) }
+                        .cardRows()
                     Section("Account") {
                         LabeledContent("Username", value: user.username)
                         LabeledContent("Email", value: user.email)
                     }
+                    .cardRows()
                 }
 
                 Section {
@@ -28,11 +30,13 @@ struct ProfileView: View {
                         Text("Following the system appearance. Turn off Match System to pick one.")
                     }
                 }
+                .cardRows()
 
                 Section {
                     Button("Log Out", role: .destructive) { isConfirmingLogout = true }
                         .frame(maxWidth: .infinity)
                 }
+                .cardRows()
             }
             .listStyle(.insetGrouped)
             .skyBackground()

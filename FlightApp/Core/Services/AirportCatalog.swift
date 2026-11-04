@@ -11,13 +11,21 @@ extension AirportCatalog {
         airports.first { $0.code.caseInsensitiveCompare(code) == .orderedSame }
     }
 
-    /// Matches IATA code prefix first, then city / airport name / country substrings.
+    /// Matches IATA code prefix first, then words in the city / airport name / country
+    /// that start with the query ("ti" finds Tirana, not every "Interna-ti-onal").
     func search(_ query: String, limit: Int = 6) -> [Airport] {
         let needle = query.trimmingCharacters(in: .whitespaces)
         guard !needle.isEmpty else { return [] }
 
         func matches(_ value: String) -> Bool {
-            value.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            var searchRange = value.startIndex..<value.endIndex
+            while let found = value.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive], range: searchRange) {
+                if found.lowerBound == value.startIndex || !value[value.index(before: found.lowerBound)].isLetter {
+                    return true
+                }
+                searchRange = found.upperBound..<value.endIndex
+            }
+            return false
         }
 
         let codeMatches = airports.filter {

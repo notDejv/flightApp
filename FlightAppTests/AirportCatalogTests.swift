@@ -22,6 +22,12 @@ struct AirportCatalogTests {
         #expect(catalog.search("vie") == [Fixtures.vienna])
     }
 
+    @Test func matchesWordStartsOnly() {
+        // "na" appears inside "International" and "Malpensa" but starts no word.
+        #expect(catalog.search("na").isEmpty)
+        #expect(catalog.search("malp") == [Fixtures.milan])
+    }
+
     @Test func respectsLimit() {
         #expect(catalog.search("a", limit: 2).count == 2)
     }

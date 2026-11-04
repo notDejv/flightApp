@@ -16,6 +16,7 @@ struct Greeting: Equatable {
 
     func message(for user: User) -> String {
         let firstName = user.displayName.split(separator: " ").first.map(String.init) ?? user.displayName
-        return "\(text), \(firstName) \(emoji)"
+        // No-break space keeps the emoji from wrapping onto its own line.
+        return "\(text), \(firstName)\u{00A0}\(emoji)"
     }
 }

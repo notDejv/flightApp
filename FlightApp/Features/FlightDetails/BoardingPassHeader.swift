@@ -79,9 +79,12 @@ struct BoardingPassHeader: View {
                 .foregroundStyle(flight.status == .cancelled ? .red : Palette.accent)
                 .contentTransition(.numericText())
 
+            // Terminal and gate are short; the aircraft name gets the remaining width.
             HStack(spacing: 10) {
                 InfoChip(title: "Terminal", value: flight.terminal)
+                    .fixedSize(horizontal: true, vertical: false)
                 InfoChip(title: "Gate", value: flight.gate)
+                    .fixedSize(horizontal: true, vertical: false)
                 InfoChip(title: "Aircraft", value: flight.aircraft)
             }
         }

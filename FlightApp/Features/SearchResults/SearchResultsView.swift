@@ -64,6 +64,7 @@ struct SearchResultsView: View {
                             }
                         }
                     }
+                    .cardRows()
                 }
             }
         }

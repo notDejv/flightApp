@@ -35,6 +35,7 @@ struct FavoritesView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                .cardRows()
                 .swipeActions {
                     Button("Remove", systemImage: "heart.slash", role: .destructive) {
                         favorites.remove(flight)

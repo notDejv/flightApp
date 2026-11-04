@@ -24,12 +24,14 @@ struct FlightDetailsView: View {
                 LabeledContent("Terminal", value: flight.terminal)
                 LabeledContent("Gate", value: flight.gate)
             }
+            .cardRows()
 
             Section("Arrival · \(flight.destination.city)") {
                 LabeledContent("Airport", value: flight.destination.name)
                 LabeledContent("Date", value: flight.arrival.formatted(date: .complete, time: .omitted))
                 LabeledContent("Time", value: flight.arrival.formatted(date: .omitted, time: .shortened))
             }
+            .cardRows()
 
             liveActivitySection
         }
@@ -67,6 +69,7 @@ struct FlightDetailsView: View {
                     ? "Shows this flight's status on the Lock Screen and in the Dynamic Island."
                     : "Live Activities are turned off for this app in Settings.")
             }
+            .cardRows()
         } else {
             Section {
             } footer: {

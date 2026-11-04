@@ -19,6 +19,12 @@ extension View {
         scrollContentBackground(.hidden)
             .background { SkyBackground(drifting: drifting) }
     }
+
+    /// Card-colored List rows, so dark mode rows match the sky instead of system grey.
+    /// Applies to every row inside a Section or ForEach.
+    func cardRows() -> some View {
+        listRowBackground(Palette.card)
+    }
 }
 
 private struct DriftingClouds: View {

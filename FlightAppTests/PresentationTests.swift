@@ -60,6 +60,6 @@ struct GreetingTests {
     @Test func usesFirstName() {
         let user = User(username: "jane.doe", displayName: "Jane Doe", email: "jane.doe@example.com")
         let greeting = Greeting(date: date(hour: 8), calendar: Fixtures.utcCalendar)
-        #expect(greeting.message(for: user) == "Good morning, Jane ☀️")
+        #expect(greeting.message(for: user) == "Good morning, Jane\u{00A0}☀️")
     }
 }

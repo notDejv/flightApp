@@ -3,7 +3,8 @@ import UIKit
 
 /// Colors taken from the app icon. Each adapts to light and dark mode.
 enum Palette {
-    static let accent = Color(light: 0x6C5CE7, dark: 0xA99BFF)
+    // Dark variant stays deep enough for white text on prominent buttons.
+    static let accent = Color(light: 0x6C5CE7, dark: 0x8F80F8)
     static let ink = Color(light: 0x2B2D5C, dark: 0xF4F2FF)
     static let skyTop = Color(light: 0xEAF4FF, dark: 0x14173A)
     static let skyBottom = Color(light: 0xF4ECFF, dark: 0x251D4D)

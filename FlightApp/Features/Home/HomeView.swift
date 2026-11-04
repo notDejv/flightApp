@@ -51,8 +51,8 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(Greeting(date: context.date).message(for: user))
                             .font(.title2.bold())
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.8)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                         Text("Where are we flying today?")
                             .foregroundStyle(.secondary)
                     }
@@ -71,25 +71,28 @@ struct HomeView: View {
 
     private var searchSection: some View {
         Section {
-            airportRow(.origin, title: "From", placeholder: "Origin (e.g. TIA)", icon: "airplane.departure")
-            suggestionRows(for: .origin)
+            Group {
+                airportRow(.origin, title: "From", placeholder: "Origin (e.g. TIA)", icon: "airplane.departure")
+                suggestionRows(for: .origin)
 
-            airportRow(.destination, title: "To", placeholder: "Destination (e.g. FCO)", icon: "airplane.arrival")
-            suggestionRows(for: .destination)
+                airportRow(.destination, title: "To", placeholder: "Destination (e.g. FCO)", icon: "airplane.arrival")
+                suggestionRows(for: .destination)
 
-            DatePicker("Departure", selection: $viewModel.departureDate, displayedComponents: .date)
-            DatePicker(
-                "Arrival",
-                selection: $viewModel.arrivalDate,
-                in: viewModel.departureDate...,
-                displayedComponents: .date
-            )
+                DatePicker("Departure", selection: $viewModel.departureDate, displayedComponents: .date)
+                DatePicker(
+                    "Arrival",
+                    selection: $viewModel.arrivalDate,
+                    in: viewModel.departureDate...,
+                    displayedComponents: .date
+                )
 
-            if let message = viewModel.validationMessage {
-                Label(message, systemImage: "exclamationmark.circle.fill")
-                    .font(.footnote)
-                    .foregroundStyle(.red)
+                if let message = viewModel.validationMessage {
+                    Label(message, systemImage: "exclamationmark.circle.fill")
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
             }
+            .cardRows()
 
             Button(action: search) {
                 // A hidden twin of the icon on the right keeps the word itself centered.
@@ -194,6 +197,7 @@ struct HomeView: View {
                     .foregroundStyle(.red)
             }
         }
+        .cardRows()
     }
 
     private func search() {

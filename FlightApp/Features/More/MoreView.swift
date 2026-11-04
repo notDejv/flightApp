@@ -24,6 +24,7 @@ struct MoreView: View {
                 NavigationLink(value: item) {
                     Label(item.title, systemImage: item.icon)
                 }
+                .cardRows()
             }
             .listStyle(.insetGrouped)
             .skyBackground()
