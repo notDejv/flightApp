@@ -143,6 +143,17 @@ struct FavoritesTests {
         #expect(try makeRepository(owner: "john").favorites() == [Fixtures.flight()])
     }
 
+    @Test func removingReportsTheFlight() {
+        let store = FavoritesStore(repository: makeRepository())
+        var removed: [String] = []
+        store.onRemove = { removed.append($0) }
+
+        store.toggle(Fixtures.flight())
+        #expect(removed.isEmpty)
+        store.toggle(Fixtures.flight())
+        #expect(removed == [Fixtures.flight().id])
+    }
+
     @Test func storeWithoutRepositoryIsEmpty() {
         let store = FavoritesStore()
         store.toggle(Fixtures.flight())

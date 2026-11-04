@@ -83,3 +83,14 @@ struct FailingFlightService: FlightService {
         throw Failure()
     }
 }
+
+/// Succeeds on the first search, then fails, like a connection dropping mid-session.
+actor FlakyFlightService: FlightService {
+    private var calls = 0
+
+    func searchFlights(_ criteria: SearchCriteria) async throws -> [Flight] {
+        calls += 1
+        if calls > 1 { throw FailingFlightService.Failure() }
+        return [Fixtures.flight()]
+    }
+}

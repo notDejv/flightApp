@@ -21,6 +21,17 @@ struct SearchResultsView: View {
                 }
             }
             .task { await viewModel.load() }
+            .alert(
+                "Couldn't refresh",
+                isPresented: Binding(
+                    get: { viewModel.refreshError != nil },
+                    set: { if !$0 { viewModel.refreshError = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Showing the last results. \(viewModel.refreshError ?? "")")
+            }
     }
 
     @ViewBuilder

@@ -14,6 +14,8 @@ final class SearchResultsViewModel {
     let criteria: SearchCriteria
     private(set) var flights: [Flight] = []
     private(set) var state: State = .idle
+    /// Set when a refresh fails while results are already on screen; those results stay.
+    var refreshError: String?
 
     private let flightService: FlightService
     private let calendar: Calendar
@@ -37,7 +39,9 @@ final class SearchResultsViewModel {
         await fetch()
     }
 
+    /// Pull-to-refresh, or Try Again after a failure (which shows the loader again).
     func refresh() async {
+        if case .failed = state { state = .loading }
         await fetch()
     }
 
@@ -45,10 +49,15 @@ final class SearchResultsViewModel {
         do {
             flights = try await flightService.searchFlights(criteria)
             state = .loaded
+            refreshError = nil
         } catch is CancellationError {
             if state == .loading { state = .idle }
         } catch {
-            state = .failed(error.localizedDescription)
+            if state == .loaded {
+                refreshError = error.localizedDescription
+            } else {
+                state = .failed(error.localizedDescription)
+            }
         }
     }
 }

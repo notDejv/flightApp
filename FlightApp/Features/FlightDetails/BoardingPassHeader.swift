@@ -41,7 +41,7 @@ struct BoardingPassHeader: View {
                         .font(.title2.bold().monospaced())
                 }
                 Spacer()
-                StatusBadge(status: flight.status)
+                StatusBadge(status: flight.status(at: .now))
             }
 
             RouteArc(progress: shownProgress, isCancelled: flight.status == .cancelled)

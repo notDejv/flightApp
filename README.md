@@ -91,7 +91,7 @@ xcodegen generate
 
 ### Trying the Live Activity
 
-Favorite a flight, open its details and tap **Track on Lock Screen**. The status then advances (boarding → departed → landed) every 20 seconds. Lock the device or simulator to see it on the Lock Screen; on devices with a Dynamic Island it also shows there.
+Favorite a flight, open its details and tap **Track on Lock Screen**. The status then advances (boarding → departed → landed) every 20 seconds. Unfavoriting the flight or logging out ends the activity. Lock the device or simulator to see it on the Lock Screen; on devices with a Dynamic Island it also shows there.
 
 ## Architecture
 
@@ -165,7 +165,7 @@ xcodebuild test -scheme FlightApp -destination 'platform=iOS Simulator,name=iPho
 The suite uses **Swift Testing** and in-memory SwiftData containers, so tests don't touch the app's real store. It covers:
 
 - **Persistence:** recent searches are newest first, de-duplicated, limited per user and isolated per user. Favorites add and remove correctly, and the same flight can be favorited by different users. Data survives new repository instances. Session and theme persistence.
-- **View models:** search form validation (same airport, date order), autocomplete clearing a selection, saving and prefilling recent searches, swapping airports, loading and grouping results, error states, login validation and success.
+- **View models:** search form validation (same airport, date order, no past departures, the 14-day range), autocomplete clearing a selection, saving and prefilling recent searches (old trips move to today), swapping airports, loading and grouping results, error states and keeping results when a refresh fails, login validation and success.
 - **Business logic:** generator determinism, schedule shape and status rules, date-range search and its cap, airport search ranking, flight timeline / countdown text, greeting by time of day, Live Activity status progression.
 - **Integration:** favorites follow the signed-in user through `AppDependencies` across logout and login.
 
@@ -174,7 +174,7 @@ The suite uses **Swift Testing** and in-memory SwiftData containers, so tests do
 - **Mock auth, no Keychain.** There's no token or real credential, so only the signed-in user's profile is stored, in `UserDefaults`. A real implementation would keep a token in the Keychain.
 - **Per-user data keyed by username.** Favorites and recent searches carry an `ownerID` (the lowercased username). With a real backend this would be the account ID, and favorites would probably sync from the server.
 - **Encoded payloads in SwiftData.** Recent searches and favorites store the criteria / flight as encoded `Data` next to a few indexed fields (`ownerID`, key, timestamp). The app always reads these records back whole and only filters and sorts by those fields, so a full relational model would add mapping code without benefit. The downside is that payload contents can't be queried with predicates.
-- **Favorites are snapshots.** A favorite stores the flight as it was when saved. Flight Details derives "upcoming / in the air / landed" from the departure and arrival times, so older favorites still read correctly. A real app would refresh status from the API.
+- **Favorites are snapshots.** A favorite stores the flight as it was when saved. Status badges and Flight Details derive "boarding / departed / landed" from the departure and arrival times, so older favorites still read correctly. A real app would refresh status from the API.
 - **Simulated Live Activity updates.** Without a push server, status changes are driven locally by a timer while the app is alive. Production would use ActivityKit push updates over APNs.
 - **Window-level theme override** instead of `preferredColorScheme`, for the reasons described under [Theming](#theming).
 - **XcodeGen.** `project.yml` keeps the project definition readable and avoids merge conflicts in `project.pbxproj`. The generated project is committed, so reviewers don't need to install anything.

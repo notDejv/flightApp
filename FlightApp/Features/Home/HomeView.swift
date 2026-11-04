@@ -30,6 +30,9 @@ struct HomeView: View {
             .scrollDismissesKeyboard(.interactively)
             .animation(.default, value: viewModel.recentSearches)
             .animation(.snappy, value: focusedField)
+            // Loaded here, not in the view model's init: SwiftUI may build HomeView (and a
+            // throwaway view model) many times, but only the kept one appears.
+            .task { viewModel.loadRecentSearches() }
             .navigationTitle("Search Flights")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: SearchCriteria.self) { criteria in
@@ -78,11 +81,16 @@ struct HomeView: View {
                 airportRow(.destination, title: "To", placeholder: "Destination (e.g. FCO)", icon: "airplane.arrival")
                 suggestionRows(for: .destination)
 
-                DatePicker("Departure", selection: $viewModel.departureDate, displayedComponents: .date)
+                DatePicker(
+                    "Departure",
+                    selection: $viewModel.departureDate,
+                    in: viewModel.earliestDeparture...,
+                    displayedComponents: .date
+                )
                 DatePicker(
                     "Arrival",
                     selection: $viewModel.arrivalDate,
-                    in: viewModel.departureDate...,
+                    in: viewModel.arrivalRange,
                     displayedComponents: .date
                 )
 

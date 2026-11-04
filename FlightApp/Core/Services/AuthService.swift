@@ -31,7 +31,8 @@ struct MockAuthService: AuthService {
         try await Task.sleep(for: latency)
 
         let isEmail = username.contains("@")
-        let handle = isEmail ? String(username.split(separator: "@")[0]) : username
+        // `split` drops empty pieces, so a username of only "@" has no first part.
+        let handle = isEmail ? String(username.split(separator: "@").first ?? "") : username
         let displayName = handle
             .split(whereSeparator: { ".-_".contains($0) })
             .map { $0.capitalized }

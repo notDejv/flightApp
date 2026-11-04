@@ -29,5 +29,16 @@ struct MainTabView: View {
                 .tabItem { Label("More", systemImage: "ellipsis.circle") }
                 .tag(Tab.more)
         }
+        .alert(
+            "Couldn't update favorites",
+            isPresented: Binding(
+                get: { favorites.errorMessage != nil },
+                set: { if !$0 { favorites.dismissError() } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(favorites.errorMessage ?? "")
+        }
     }
 }

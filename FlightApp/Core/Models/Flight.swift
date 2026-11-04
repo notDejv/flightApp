@@ -34,4 +34,15 @@ struct Flight: Codable, Hashable, Identifiable, Sendable {
     var status: FlightStatus
 
     var duration: TimeInterval { arrival.timeIntervalSince(departure) }
+
+    /// Status as of `now`. The stored `status` is a snapshot from when the flight was
+    /// fetched, so a favorite saved days ago would otherwise still read "Boarding".
+    /// Only cancelled and delayed are kept from the snapshot.
+    func status(at now: Date) -> FlightStatus {
+        if status == .cancelled { return .cancelled }
+        if now >= arrival { return .landed }
+        if now >= departure { return .departed }
+        if departure.timeIntervalSince(now) < 45 * 60 { return .boarding }
+        return status == .delayed ? .delayed : .scheduled
+    }
 }

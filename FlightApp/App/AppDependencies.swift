@@ -31,11 +31,19 @@ final class AppDependencies {
         favorites = FavoritesStore()
         liveActivities = LiveActivityService()
 
-        // Favorites always belong to whoever is signed in.
-        session.onUserChange = { [unowned self] user in
+        // Favorites always belong to whoever is signed in, and Live Activities don't
+        // outlive the session that started them.
+        // The tasks capture the service itself, since they can outlive `self`.
+        session.onUserChange = { [unowned self, liveActivities] user in
             favorites.switchRepository(user.map(favoritesRepository(for:)))
+            Task { await liveActivities.stopAll() }
         }
         favorites.switchRepository(session.user.map(favoritesRepository(for:)))
+
+        // Only favorites can be tracked, so unfavoriting ends the activity.
+        favorites.onRemove = { [liveActivities] flightID in
+            Task { await liveActivities.stop(flightID: flightID) }
+        }
     }
 
     func recentSearchRepository(for user: User) -> RecentSearchRepository {

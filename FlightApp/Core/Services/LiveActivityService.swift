@@ -14,7 +14,9 @@ final class LiveActivityService {
     var updateInterval: Duration = .seconds(20)
 
     init() {
-        trackedFlightIDs = Set(Activity<FlightActivityAttributes>.activities.map(\.attributes.flightID))
+        // Updates are simulated in-process, so activities left over from a previous
+        // launch would stay frozen. End them instead of showing stale status.
+        Task { await Self.endAllActivities() }
     }
 
     var areActivitiesEnabled: Bool {
@@ -28,6 +30,7 @@ final class LiveActivityService {
     func start(_ flight: Flight) throws {
         guard !isTracking(flight) else { return }
 
+        let status = flight.status(at: .now)
         let attributes = FlightActivityAttributes(
             flightID: flight.id,
             flightNumber: flight.flightNumber,
@@ -35,20 +38,38 @@ final class LiveActivityService {
             origin: flight.origin.code,
             destination: flight.destination.code
         )
-        let state = Self.state(for: flight, status: flight.status)
+        let state = Self.state(for: flight, status: status)
         _ = try Activity.request(attributes: attributes, content: ActivityContent(state: state, staleDate: nil))
         trackedFlightIDs.insert(flight.id)
-        simulateProgress(for: flight)
+        simulateProgress(for: flight, from: status)
+        watchForDismissal(of: flight.id)
     }
 
     func stop(_ flight: Flight) async {
-        simulations.removeValue(forKey: flight.id)?.cancel()
-        trackedFlightIDs.remove(flight.id)
-        await Self.endActivities(for: flight.id)
+        await stop(flightID: flight.id)
     }
 
-    private func simulateProgress(for flight: Flight) {
-        let steps = Self.simulatedSteps(after: flight.status)
+    func stop(flightID: String) async {
+        guard trackedFlightIDs.contains(flightID) else { return }
+        forget(flightID)
+        await Self.endActivities(for: flightID)
+    }
+
+    /// Ends every activity, e.g. on logout so the next user doesn't see them.
+    func stopAll() async {
+        simulations.values.forEach { $0.cancel() }
+        simulations = [:]
+        trackedFlightIDs = []
+        await Self.endAllActivities()
+    }
+
+    private func forget(_ flightID: String) {
+        simulations.removeValue(forKey: flightID)?.cancel()
+        trackedFlightIDs.remove(flightID)
+    }
+
+    private func simulateProgress(for flight: Flight, from status: FlightStatus) {
+        let steps = Self.simulatedSteps(after: status)
         guard !steps.isEmpty else { return }
 
         simulations[flight.id] = Task { [updateInterval] in
@@ -57,6 +78,15 @@ final class LiveActivityService {
                 guard !Task.isCancelled else { return }
                 await Self.updateActivities(for: flight.id, state: Self.state(for: flight, status: status))
             }
+        }
+    }
+
+    /// The user can swipe an activity away on the Lock Screen, and the system ends
+    /// long-running ones. Either way the button should go back to "Track".
+    private func watchForDismissal(of flightID: String) {
+        Task { [weak self] in
+            await Self.waitUntilEnded(flightID: flightID)
+            self?.forget(flightID)
         }
     }
 
@@ -92,6 +122,19 @@ final class LiveActivityService {
     private nonisolated static func endActivities(for flightID: String) async {
         for activity in activities(for: flightID) {
             await activity.end(nil, dismissalPolicy: .immediate)
+        }
+    }
+
+    private nonisolated static func endAllActivities() async {
+        for activity in Activity<FlightActivityAttributes>.activities {
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
+    }
+
+    private nonisolated static func waitUntilEnded(flightID: String) async {
+        guard let activity = activities(for: flightID).first else { return }
+        for await state in activity.activityStateUpdates where state == .ended || state == .dismissed {
+            return
         }
     }
 }

@@ -10,8 +10,9 @@ struct MockFlightService: FlightService {
     var latency: Duration = .milliseconds(600)
     var now: @Sendable () -> Date = { .now }
 
-    /// Upper bound on how many days of a date range are searched.
-    static let maxDays = 14
+    /// Upper bound on how many days of a date range are searched. The form already
+    /// limits the range; this guards other callers.
+    static let maxDays = SearchCriteria.maxDays
 
     func searchFlights(_ criteria: SearchCriteria) async throws -> [Flight] {
         try await Task.sleep(for: latency)

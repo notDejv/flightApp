@@ -26,7 +26,7 @@ struct FlightRow<Accessory: View>: View {
                 endpoint(time: flight.arrival, code: flight.destination.code, alignment: .trailing)
             }
 
-            StatusBadge(status: flight.status)
+            StatusBadge(status: flight.status(at: .now))
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)

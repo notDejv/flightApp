@@ -9,6 +9,9 @@ final class FavoritesStore {
     private(set) var flights: [Flight] = []
     private(set) var errorMessage: String?
 
+    /// Called with a flight's ID after it's removed, e.g. to end its Live Activity.
+    var onRemove: ((String) -> Void)?
+
     private var ids: Set<String> = []
     private var repository: FavoritesRepository?
 
@@ -20,6 +23,9 @@ final class FavoritesStore {
     /// Points the store at another user's favorites (or none, after logout).
     func switchRepository(_ repository: FavoritesRepository?) {
         self.repository = repository
+        // Never keep the previous user's flights around, even if the reload fails.
+        flights = []
+        ids = []
         reload()
     }
 
@@ -36,26 +42,35 @@ final class FavoritesStore {
     }
 
     func remove(_ flight: Flight) {
-        perform { try $0.remove(flightID: flight.id) }
+        if perform({ try $0.remove(flightID: flight.id) }) {
+            onRemove?(flight.id)
+        }
     }
 
     func reload() {
         perform { _ in }
     }
 
-    private func perform(_ change: (FavoritesRepository) throws -> Void) {
+    func dismissError() {
+        errorMessage = nil
+    }
+
+    @discardableResult
+    private func perform(_ change: (FavoritesRepository) throws -> Void) -> Bool {
         guard let repository else {
             flights = []
             ids = []
-            return
+            return false
         }
         do {
             try change(repository)
             flights = try repository.favorites()
             ids = Set(flights.map(\.id))
             errorMessage = nil
+            return true
         } catch {
             errorMessage = error.localizedDescription
+            return false
         }
     }
 }

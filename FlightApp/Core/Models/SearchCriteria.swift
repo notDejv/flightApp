@@ -6,6 +6,9 @@ struct SearchCriteria: Codable, Hashable, Sendable {
     let departureDate: Date
     let arrivalDate: Date
 
+    /// Longest date range a search covers, departure day included.
+    static let maxDays = 14
+
     /// Identity used to de-duplicate recent searches: same route on the same days.
     var key: String {
         "\(origin.code)-\(destination.code)-\(Self.dayKey(departureDate))-\(Self.dayKey(arrivalDate))"

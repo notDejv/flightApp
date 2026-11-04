@@ -14,9 +14,10 @@ final class HomeViewModel {
     private(set) var originQuery = ""
     private(set) var destinationQuery = ""
 
+    /// Keeps arrival inside `arrivalRange` when departure moves.
     var departureDate: Date {
         didSet {
-            if arrivalDate < departureDate { arrivalDate = departureDate }
+            arrivalDate = min(max(arrivalDate, arrivalRange.lowerBound), arrivalRange.upperBound)
         }
     }
     var arrivalDate: Date
@@ -27,20 +28,35 @@ final class HomeViewModel {
     private let airports: AirportCatalog
     private let repository: RecentSearchRepository
     private let calendar: Calendar
+    private let now: () -> Date
 
     init(
         airports: AirportCatalog,
         repository: RecentSearchRepository,
-        now: Date = .now,
+        now: @escaping () -> Date = { .now },
         calendar: Calendar = .current
     ) {
         self.airports = airports
         self.repository = repository
         self.calendar = calendar
-        let today = calendar.startOfDay(for: now)
+        self.now = now
+        let today = calendar.startOfDay(for: now())
         departureDate = today
         arrivalDate = calendar.date(byAdding: .day, value: 3, to: today) ?? today
-        loadRecentSearches()
+    }
+
+    // MARK: Dates
+
+    /// Today, read each time so a form left open overnight doesn't allow yesterday.
+    var earliestDeparture: Date {
+        calendar.startOfDay(for: now())
+    }
+
+    /// From the departure day to the last day a search covers.
+    var arrivalRange: ClosedRange<Date> {
+        let start = calendar.startOfDay(for: departureDate)
+        let end = calendar.date(byAdding: .day, value: SearchCriteria.maxDays - 1, to: start) ?? start
+        return start...end
     }
 
     // MARK: Airport fields
@@ -92,6 +108,9 @@ final class HomeViewModel {
         if let origin, let destination, origin.code == destination.code {
             return "Origin and destination cannot be the same."
         }
+        if calendar.startOfDay(for: departureDate) < earliestDeparture {
+            return "Departure date can't be in the past."
+        }
         if calendar.startOfDay(for: arrivalDate) < calendar.startOfDay(for: departureDate) {
             return "Arrival date can't be before the departure date."
         }
@@ -124,11 +143,15 @@ final class HomeViewModel {
         return criteria
     }
 
+    /// Restores a recent search. Dates that are now in the past move to today,
+    /// keeping the trip's length.
     func prefill(with criteria: SearchCriteria) {
         select(criteria.origin, for: .origin)
         select(criteria.destination, for: .destination)
-        departureDate = criteria.departureDate
-        arrivalDate = criteria.arrivalDate
+        let tripDays = calendar.dateComponents([.day], from: criteria.departureDate, to: criteria.arrivalDate).day ?? 0
+        departureDate = max(criteria.departureDate, earliestDeparture)
+        let arrival = calendar.date(byAdding: .day, value: tripDays, to: departureDate) ?? departureDate
+        arrivalDate = min(max(arrival, arrivalRange.lowerBound), arrivalRange.upperBound)
     }
 
     func loadRecentSearches() {

@@ -16,7 +16,7 @@ struct HomeViewModelTests {
         viewModel = HomeViewModel(
             airports: Fixtures.catalog,
             repository: repository,
-            now: Fixtures.day,
+            now: { Fixtures.day },
             calendar: Fixtures.utcCalendar
         )
     }
@@ -77,6 +77,37 @@ struct HomeViewModelTests {
         #expect(viewModel.arrivalDate == criteria.arrivalDate)
     }
 
+    @Test func pastDepartureIsRejected() {
+        viewModel.select(Fixtures.tirana, for: .origin)
+        viewModel.select(Fixtures.rome, for: .destination)
+        viewModel.departureDate = Fixtures.date(daysAfter: -1)
+
+        #expect(viewModel.validationMessage == "Departure date can't be in the past.")
+        #expect(!viewModel.canSearch)
+    }
+
+    @Test func prefillMovesPastTripToTodayKeepingLength() {
+        let lastMonth = Fixtures.criteria(
+            departure: Fixtures.date(daysAfter: -30),
+            arrival: Fixtures.date(daysAfter: -28)
+        )
+        viewModel.prefill(with: lastMonth)
+
+        #expect(viewModel.departureDate == Fixtures.day)
+        #expect(viewModel.arrivalDate == Fixtures.date(daysAfter: 2))
+        #expect(viewModel.validationMessage == nil)
+    }
+
+    @Test func arrivalStaysWithinSearchableRange() {
+        #expect(viewModel.arrivalRange.upperBound == Fixtures.date(daysAfter: SearchCriteria.maxDays - 1))
+
+        // Moving departure earlier pulls a long trip back inside the 14 days.
+        viewModel.departureDate = Fixtures.date(daysAfter: 5)
+        viewModel.arrivalDate = Fixtures.date(daysAfter: 18)
+        viewModel.departureDate = Fixtures.day
+        #expect(viewModel.arrivalDate == Fixtures.date(daysAfter: 13))
+    }
+
     @Test func swapExchangesAirports() {
         viewModel.select(Fixtures.tirana, for: .origin)
         viewModel.select(Fixtures.rome, for: .destination)
@@ -114,6 +145,16 @@ struct SearchResultsViewModelTests {
         let viewModel = SearchResultsViewModel(criteria: Fixtures.criteria(), flightService: FailingFlightService())
         await viewModel.load()
         #expect(viewModel.state == .failed("Network unavailable"))
+    }
+
+    @Test func failedRefreshKeepsLoadedResults() async {
+        let viewModel = SearchResultsViewModel(criteria: Fixtures.criteria(), flightService: FlakyFlightService())
+        await viewModel.load()
+        await viewModel.refresh()
+
+        #expect(viewModel.state == .loaded)
+        #expect(viewModel.flights == [Fixtures.flight()])
+        #expect(viewModel.refreshError == "Network unavailable")
     }
 }
 
@@ -154,6 +195,28 @@ struct LoginViewModelTests {
 
         #expect(session.user?.displayName == "Jane Doe")
         #expect(session.user?.email == "jane.doe@example.com")
+    }
+
+    @Test func usernameOfOnlyAtSignsDoesNotCrash() async throws {
+        let user = try await MockAuthService(latency: .zero).login(username: "@@", password: "secret")
+        #expect(user.displayName == "@@")
+    }
+}
+
+struct FlightStatusTests {
+    let flight = Fixtures.flight() // departs 08:00, lands 09:30 on Fixtures.day
+
+    @Test func statusFollowsTheClock() {
+        #expect(flight.status(at: Fixtures.day) == .scheduled)
+        #expect(flight.status(at: Fixtures.day.addingTimeInterval(7.5 * 3600)) == .boarding)
+        #expect(flight.status(at: Fixtures.day.addingTimeInterval(9 * 3600)) == .departed)
+        #expect(flight.status(at: Fixtures.date(daysAfter: 3)) == .landed)
+    }
+
+    @Test func cancelledStaysCancelled() {
+        var cancelled = flight
+        cancelled.status = .cancelled
+        #expect(cancelled.status(at: Fixtures.date(daysAfter: 3)) == .cancelled)
     }
 }
 
