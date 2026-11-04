@@ -9,6 +9,10 @@ A small SwiftUI flight app: log in, search flights, keep recent searches, save f
 - **MVVM** architecture (explained below)
 - No third-party dependencies
 
+<p align="center">
+  <img src="docs/demo.gif" width="280" alt="Demo: splash, airport autocomplete, search, favoriting, flight details and switching to dark mode">
+</p>
+
 ## Contents
 
 - [Features](#features)
@@ -33,7 +37,7 @@ A small SwiftUI flight app: log in, search flights, keep recent searches, save f
 | **Recent searches** | Shown as `TIA → FCO · 12 Oct – 15 Oct`. Newest first, limited to the last 10, repeated searches move to the top instead of duplicating. Tapping one prefills the form. Persisted with SwiftData. |
 | **Favorite flights** | Own tab. Remove by swipe or Edit. Persisted with SwiftData. |
 | **Flight details** | Departure/arrival airports, dates and times, aircraft, terminal, gate and status. Reachable from both Search Results and Favorites. |
-| **Navigation** | Tab bar with Home, Favorites, Profile and More. Each tab has its own `NavigationStack` with proper titles and back navigation (Home → Results → Details, Favorites → Details, More → sub-pages). |
+| **Navigation** | Tab bar with Home, Favorite Flights, Profile and More. Each tab has its own `NavigationStack` with proper titles and back navigation (Home → Results → Details, Favorites → Details, More → sub-pages). |
 | **Profile** | User info, dark mode toggle and logout (with confirmation). |
 | **More** | Settings, Help, About and Contact, each leading to a placeholder screen. |
 | **Theming** | Light and dark themes applied to every screen including navigation bars and the tab bar. Follows the system appearance by default and remembers the user's choice. |
@@ -74,7 +78,7 @@ A small SwiftUI flight app: log in, search flights, keep recent searches, save f
 
 ### Running on a device
 
-The project is signed with automatic signing. To run on your own iPhone, change the team for both the **FlightApp** and **FlightWidget** targets under *Signing & Capabilities* (or change `DEVELOPMENT_TEAM` in `project.yml` and regenerate). If the bundle identifier is taken, change `com.dejv.flightApp` and keep the widget as `<app id>.widget`.
+Simulator builds work as is, with no signing changes. The project uses automatic signing with the author's team, so to run on your own iPhone, change the team for both the **FlightApp** and **FlightWidget** targets under *Signing & Capabilities* (or change `DEVELOPMENT_TEAM` in `project.yml` and regenerate). If the bundle identifier is taken, change `com.dejv.flightApp` and keep the widget as `<app id>.widget`.
 
 ### Regenerating the project
 

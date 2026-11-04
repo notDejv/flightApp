@@ -17,7 +17,7 @@ struct MainTabView: View {
                 .tag(Tab.home)
 
             FavoritesView()
-                .tabItem { Label("Favorites", systemImage: "heart") }
+                .tabItem { Label("Favorite Flights", systemImage: "heart") }
                 .badge(favorites.flights.count)
                 .tag(Tab.favorites)
 
